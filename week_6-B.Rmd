@@ -77,16 +77,13 @@ scene_1 <- tibble(urn_red = 1:1000) %>%
 
 ```{r}
 
-scene_2 <- scene_1 %>%
+scene_1 %>%
   filter(paddle_red == 10) %>%
   group_by(urn_red) %>%
   summarize(total = n(), .groups = "drop") %>%
   mutate(probs = total/sum(total)) %>%
-  select(-total)
-
-ggplot(scene_2, aes(x = urn_red, y = probs)) +
+  ggplot(aes(x = urn_red, y = probs)) +
     geom_col() 
-
 
 ```
 
@@ -95,6 +92,20 @@ ggplot(scene_2, aes(x = urn_red, y = probs)) +
 ## Scene 3
 
 **Prompt:** With our posterior probability distribution, we can now forecast outcomes which we have not yet seen. For example, what is the probability of getting more than 3 reds if we sample 20 from the urn, given our posterior? (That is, we are pretending that we don't know the number of red beads in the urn.)
+
+```{r}
+
+tibble(urn_red = 1:1000) %>% 
+  mutate(paddle_red = map(urn_red, ~ rbinom(n = 50,
+                                            size = 20, prob = ./1000))) %>%
+  unnest(paddle_red)%>%
+  group_by(paddle_red) %>%
+  summarize(total = n(), .groups = "drop") %>%
+  mutate(probs = total/sum(total)) %>%
+  filter(paddle_red > 3) %>%
+  summarize(sum(probs))
+
+```
 
 
 
