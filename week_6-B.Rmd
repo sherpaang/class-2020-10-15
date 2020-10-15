@@ -30,10 +30,20 @@ We are learning about sampling this week. We are taking the theory of Chapter 5 
 Recall how we (mostly) finished on Tuesday:
 
 ```{r prep}
+
 tibble(urn_red = seq(100, 700, by = 100)) %>% 
-  mutate(paddle_red = map(urn_red, ~ rbinom(n = 100, size = 25, prob = ./1000))) %>% 
+  mutate(paddle_red = map(urn_red, ~ rbinom(n = 100,
+                                            size = 25, prob = ./1000))) %>% 
+# rbinom just flips the coin a bunch of times; it returns either success or
+# failure, n = number of tests to do, size = number of samples to run each size
+# number of heads and tails, prob = chance of getting a head
+  
   unnest(paddle_red) %>% 
-  sample_n(10)
+  ggplot(aes(x = urn_red, y = paddle_red)) +
+  geom_point(alpha = 0.05)
+  
+sample_n(10)
+
 ```
 
 `urn_red` is the assumed number of red beads in the urn, out of 1,000. By assumption, we do not know the true number. Here, we are creating the joint distribution of models-that-might-be-true and results-we-might-see. That is, p(models, data). The above code gets us started in that process, but, obviously, we need to consider many more possible truths. There might be 0 or 1 or 2 or . . . red beads in the urn, after all. `n = 100` means that we are running 100 experiments at a given level of assumed number of red beads in the urn. `unnest()` explodes that list into a long tidy tibble, which will be much easier to work with.
@@ -46,6 +56,18 @@ tibble(urn_red = seq(100, 700, by = 100)) %>%
 
 Interpret the meaning of the graphic.
 
+```{r}
+
+scene_1 <- tibble(urn_red = 1:1000) %>% 
+  mutate(paddle_red = map(urn_red, ~ rbinom(n = 50,
+                                            size = 25, prob = ./1000))) %>%
+  unnest(paddle_red)
+
+  ggplot(scene_1, aes(x = paddle_red, y = urn_red)) +
+  geom_point(alpha = 0.05)
+  
+```
+
 
 
 
@@ -53,6 +75,20 @@ Interpret the meaning of the graphic.
 
 **Prompt:** Using the joint distribution we calculated in Scene 1 as input, calculate your posterior probability density for the number of red beads in the urn, given that that 10 red were sampled in our paddle of 25.
 
+```{r}
+
+scene_2 <- scene_1 %>%
+  filter(paddle_red == 10) %>%
+  group_by(urn_red) %>%
+  summarize(total = n(), .groups = "drop") %>%
+  mutate(probs = total/sum(total)) %>%
+  select(-total)
+
+ggplot(scene_2, aes(x = urn_red, y = probs)) +
+    geom_col() 
+
+
+```
 
 
 
